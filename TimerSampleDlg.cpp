@@ -50,15 +50,17 @@ BOOL CTimerSampleDlg::OnInitDialog()
 
 	CRect r;
 	GetClientRect(r);
-	m_mem_dc.Create(this, r.Width(), r.Height());
+
+	m_mem_view.Create(r.Width(), r.Height(), 32);
+	//m_mem_dc.Create(this, r.Width(), r.Height());
 
 	CClientDC dc(this);
 	srand((unsigned int)time(NULL)); // 랜덤 시드 세팅(srand)은 프로그램 시작때 한번만 하면 됨.
 	
 	for (int i = 0; i < MAX_COUNT; i++)
 	{
-		m_circleList[i].x = rand() % m_mem_dc.GetWidth(); // w 값을 넘어가지 않도록  0 ~ w-1 (너비)
-		m_circleList[i].y = rand() % m_mem_dc.GetHeight(); // h 값을 넘어가지 않도록  0 ~ h-1 (높이)
+		m_circleList[i].x = rand() % m_mem_view.GetWidth(); // w 값을 넘어가지 않도록  0 ~ w-1 (너비)
+		m_circleList[i].y = rand() % m_mem_view.GetHeight(); // h 값을 넘어가지 않도록  0 ~ h-1 (높이)
 		m_circleList[i].r = rand() % 40 + 10; // 최소크기 10인 반지름 50 이내의 원 (10~49)
 		m_circleList[i].color = RGB(rand() % 256, rand() % 256, rand() % 256);
 	}
@@ -95,7 +97,7 @@ void CTimerSampleDlg::OnPaint()
 	}
 	else
 	{
-		m_mem_dc.Draw(&dc, 0, 0);
+		m_mem_view.Draw(dc, 0, 0);
 		//dc.BitBlt(0, 0, m_mem_dc.GetWidth(), m_mem_dc.GetHeight(), m_mem_dc.GetDC(), 0, 0, SRCCOPY);
 		//CDialogEx::OnPaint();
 	}
@@ -114,20 +116,19 @@ void CTimerSampleDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	if (nIDEvent == 1) 
 	{
-		CDC* p_dc = m_mem_dc.GetDC();
-		CRect r;
-		GetClientRect(r);
-
+		HDC h_dc = m_mem_view.GetDC();
+		CDC* p_dc = CDC::FromHandle(h_dc);
+		
 		CircleData* p = m_circleList;
 		CBrush fill_brush, * p_old_brush = p_dc->GetCurrentBrush();
-		p_dc->FillSolidRect(0, 0, m_mem_dc.GetWidth(), m_mem_dc.GetHeight(), RGB(220, 220, 220));
+		p_dc->FillSolidRect(0, 0, m_mem_view.GetWidth(), m_mem_view.GetHeight(), RGB(220, 220, 220));
 		for (int i = 0; i < MAX_COUNT; i++)
 		{
 			p->r--;
 			if (p->r == 0)
 			{
-				p->x = rand() % m_mem_dc.GetWidth();
-				p->y = rand() % m_mem_dc.GetHeight();
+				p->x = rand() % m_mem_view.GetWidth();
+				p->y = rand() % m_mem_view.GetHeight();
 				p->r = rand() % 40 + 10;
 				p->color = RGB(rand() % 256, rand() % 256, rand() % 256);
 			}
@@ -139,7 +140,7 @@ void CTimerSampleDlg::OnTimer(UINT_PTR nIDEvent)
 			p++;
 		}
 		p_dc->SelectObject(p_old_brush);
-
+		m_mem_view.ReleaseDC();
 		Invalidate(FALSE); // WM_PAINT message 발생
 	}
 	else
@@ -162,5 +163,9 @@ void CTimerSampleDlg::OnSize(UINT nType, int cx, int cy)
 {
 	CDialogEx::OnSize(nType, cx, cy);
 
-	m_mem_dc.Resize(this, cx, cy);
+	if (!m_mem_view.IsNull()) {
+		m_mem_view.Destroy();
+		m_mem_view.Create(cx, cy, 32);
+	}
+	// m_mem_dc.Resize(this, cx, cy);
 }

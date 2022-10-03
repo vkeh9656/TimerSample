@@ -90,7 +90,8 @@ class CTimerSampleDlg : public CDialogEx
 private:
 	CircleData m_circleList[MAX_COUNT];
 	
-	SJ_MemDC m_mem_dc;
+	CImage m_mem_view;
+	//SJ_MemDC m_mem_dc;
 	//CDC m_mem_dc; // 가상으로 메모리에 쓸 DC
 	//CBitmap m_mem_bmp;
 	//int m_width =0, m_height =0;
