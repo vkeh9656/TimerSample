@@ -31,6 +31,8 @@ void CTimerSampleDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CTimerSampleDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_WM_TIMER()
+	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
 
@@ -45,7 +47,23 @@ BOOL CTimerSampleDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 큰 아이콘을 설정합니다.
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
-	// TODO: 여기에 추가 초기화 작업을 추가합니다.
+	CRect r;
+	GetClientRect(r);
+	
+	int w = r.Width(), h = r.Height();
+	srand((unsigned int)time(NULL)); // 랜덤 시드 세팅(srand)은 프로그램 시작때 한번만 하면 됨.
+	
+	for (int i = 0; i < MAX_COUNT; i++)
+	{
+		m_circleList[i].x = rand() % w; // w 값을 넘어가지 않도록  0 ~ w-1 (너비)
+		m_circleList[i].y = rand() % h; // h 값을 넘어가지 않도록  0 ~ h-1 (높이)
+		m_circleList[i].r = rand() % 40 + 10; // 최소크기 10인 반지름 50 이내의 원 (10~49)
+		m_circleList[i].color = RGB(rand() % 256, rand() % 256, rand() % 256);
+	}
+
+	SetTimer(1, 50, NULL); // NULL -> WM_TIMER
+
+	// CircleData m_circleList[MAX_COUNT];
 
 	return TRUE;  // 포커스를 컨트롤에 설정하지 않으면 TRUE를 반환합니다.
 }
@@ -56,10 +74,10 @@ BOOL CTimerSampleDlg::OnInitDialog()
 
 void CTimerSampleDlg::OnPaint()
 {
+	CPaintDC dc(this); // 그리기를 위한 디바이스 컨텍스트입니다.
+
 	if (IsIconic())
 	{
-		CPaintDC dc(this); // 그리기를 위한 디바이스 컨텍스트입니다.
-
 		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
 
 		// 클라이언트 사각형에서 아이콘을 가운데에 맞춥니다.
@@ -75,7 +93,27 @@ void CTimerSampleDlg::OnPaint()
 	}
 	else
 	{
-		CDialogEx::OnPaint();
+		CircleData* p = m_circleList;
+		CBrush fill_brush,  * p_old_brush = dc.GetCurrentBrush();;
+
+		
+		for (int i = 0; i < MAX_COUNT; i++)
+		{	
+			fill_brush.CreateSolidBrush(p->color);
+			dc.SelectObject(&fill_brush);
+			/*p_old_brush = dc.SelectObject(&fill_brush);*/
+
+
+			//dc.Ellipse(m_circleList[i].x - m_circleList[i].r, m_circleList[i].y - m_circleList[i].r,
+			//	m_circleList[i].x + m_circleList[i].r, m_circleList[i].y + m_circleList[i].r); // 배열연산도 그렇고, 덧셈연산이 너무 많다..
+			dc.Ellipse(p->x - p->r, p->y - p->r, p->x + p->r, p->y + p->r);
+			p++;
+
+			// dc.SelectObject(p_old_brush);
+			fill_brush.DeleteObject();
+		}
+		dc.SelectObject(p_old_brush);
+		//CDialogEx::OnPaint();
 	}
 }
 
@@ -86,3 +124,43 @@ HCURSOR CTimerSampleDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+
+
+void CTimerSampleDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	if (nIDEvent == 1) 
+	{
+		CRect r;
+		GetClientRect(r);
+		int w = r.Width(), h = r.Height();
+
+
+		CircleData* p = m_circleList;
+		for (int i = 0; i < MAX_COUNT; i++)
+		{
+			p->r--;
+			if (p->r == 0)
+			{
+				p->x = rand() % w;
+				p->y = rand() % h;
+				p->r = rand() % 40 + 10;
+				p->color = RGB(rand() % 256, rand() % 256, rand() % 256);
+			}
+			p++;
+		}
+		Invalidate(); // WM_PAINT message 발생
+	}
+	else
+	{
+		CDialogEx::OnTimer(nIDEvent);
+	}
+
+}
+
+
+void CTimerSampleDlg::OnDestroy()
+{
+	CDialogEx::OnDestroy();
+
+	KillTimer(1);
+}
