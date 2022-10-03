@@ -47,13 +47,16 @@ BOOL CTimerSampleDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 큰 아이콘을 설정합니다.
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
-	CClientDC dc(this);
-	mh_mem_dc.CreateCompatibleDC(&dc);
-
 	CRect r;
 	GetClientRect(r);
-	
+
 	int w = r.Width(), h = r.Height();
+
+	CClientDC dc(this);
+	m_mem_dc.CreateCompatibleDC(&dc);
+	m_mem_bmp.CreateCompatibleBitmap(&dc, w, h); // m_mem_dc를 참조 걸면 안됨! CompatibleDC로 선언한 dc는 비정상적인 비트맵이 생성되기 때문
+	m_mem_dc.SelectObject(&m_mem_bmp);
+
 	srand((unsigned int)time(NULL)); // 랜덤 시드 세팅(srand)은 프로그램 시작때 한번만 하면 됨.
 	
 	for (int i = 0; i < MAX_COUNT; i++)
@@ -97,25 +100,24 @@ void CTimerSampleDlg::OnPaint()
 	else
 	{
 		CircleData* p = m_circleList;
-		CBrush fill_brush,  * p_old_brush = dc.GetCurrentBrush();;
+		CBrush fill_brush,  * p_old_brush = m_mem_dc.GetCurrentBrush();;
 
-		
 		for (int i = 0; i < MAX_COUNT; i++)
 		{	
 			fill_brush.CreateSolidBrush(p->color);
-			dc.SelectObject(&fill_brush);
+			m_mem_dc.SelectObject(&fill_brush);
 			/*p_old_brush = dc.SelectObject(&fill_brush);*/
 
 
 			//dc.Ellipse(m_circleList[i].x - m_circleList[i].r, m_circleList[i].y - m_circleList[i].r,
 			//	m_circleList[i].x + m_circleList[i].r, m_circleList[i].y + m_circleList[i].r); // 배열연산도 그렇고, 덧셈연산이 너무 많다..
-			dc.Ellipse(p->x - p->r, p->y - p->r, p->x + p->r, p->y + p->r);
+			m_mem_dc.Ellipse(p->x - p->r, p->y - p->r, p->x + p->r, p->y + p->r);
 			p++;
 
 			// dc.SelectObject(p_old_brush);
 			fill_brush.DeleteObject();
 		}
-		dc.SelectObject(p_old_brush);
+		m_mem_dc.SelectObject(p_old_brush);
 		//CDialogEx::OnPaint();
 	}
 }
@@ -167,5 +169,6 @@ void CTimerSampleDlg::OnDestroy()
 
 	KillTimer(1);
 
-	mh_mem_dc.DeleteDC();
+	m_mem_bmp.DeleteObject();
+	m_mem_dc.DeleteDC();
 }
