@@ -47,6 +47,9 @@ BOOL CTimerSampleDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// 큰 아이콘을 설정합니다.
 	SetIcon(m_hIcon, FALSE);		// 작은 아이콘을 설정합니다.
 
+	CClientDC dc(this);
+	mh_mem_dc.CreateCompatibleDC(&dc);
+
 	CRect r;
 	GetClientRect(r);
 	
@@ -163,4 +166,6 @@ void CTimerSampleDlg::OnDestroy()
 	CDialogEx::OnDestroy();
 
 	KillTimer(1);
+
+	mh_mem_dc.DeleteDC();
 }
