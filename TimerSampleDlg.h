@@ -17,8 +17,11 @@ class CTimerSampleDlg : public CDialogEx
 {
 private:
 	CircleData m_circleList[MAX_COUNT];
+	
 	CDC m_mem_dc; // 가상으로 메모리에 쓸 DC
 	CBitmap m_mem_bmp;
+	int m_width, m_height;
+
 // 생성입니다.
 public:
 	CTimerSampleDlg(CWnd* pParent = nullptr);	// 표준 생성자입니다.

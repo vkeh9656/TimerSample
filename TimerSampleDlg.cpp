@@ -49,20 +49,20 @@ BOOL CTimerSampleDlg::OnInitDialog()
 
 	CRect r;
 	GetClientRect(r);
-
-	int w = r.Width(), h = r.Height();
+	m_width = r.Width();
+	m_height = r.Height();
 
 	CClientDC dc(this);
 	m_mem_dc.CreateCompatibleDC(&dc);
-	m_mem_bmp.CreateCompatibleBitmap(&dc, w, h); // m_mem_dc를 참조 걸면 안됨! CompatibleDC로 선언한 dc는 비정상적인 비트맵이 생성되기 때문
+	m_mem_bmp.CreateCompatibleBitmap(&dc, m_width, m_height); // m_mem_dc를 참조 걸면 안됨! CompatibleDC로 선언한 dc는 비정상적인 비트맵이 생성되기 때문
 	m_mem_dc.SelectObject(&m_mem_bmp);
 
 	srand((unsigned int)time(NULL)); // 랜덤 시드 세팅(srand)은 프로그램 시작때 한번만 하면 됨.
 	
 	for (int i = 0; i < MAX_COUNT; i++)
 	{
-		m_circleList[i].x = rand() % w; // w 값을 넘어가지 않도록  0 ~ w-1 (너비)
-		m_circleList[i].y = rand() % h; // h 값을 넘어가지 않도록  0 ~ h-1 (높이)
+		m_circleList[i].x = rand() % m_width; // w 값을 넘어가지 않도록  0 ~ w-1 (너비)
+		m_circleList[i].y = rand() % m_height; // h 값을 넘어가지 않도록  0 ~ h-1 (높이)
 		m_circleList[i].r = rand() % 40 + 10; // 최소크기 10인 반지름 50 이내의 원 (10~49)
 		m_circleList[i].color = RGB(rand() % 256, rand() % 256, rand() % 256);
 	}
@@ -100,7 +100,9 @@ void CTimerSampleDlg::OnPaint()
 	else
 	{
 		CircleData* p = m_circleList;
-		CBrush fill_brush,  * p_old_brush = m_mem_dc.GetCurrentBrush();;
+		CBrush fill_brush,  * p_old_brush = m_mem_dc.GetCurrentBrush();
+
+		m_mem_dc.FillSolidRect(0, 0, m_width, m_height, RGB(220, 220, 220));
 
 		for (int i = 0; i < MAX_COUNT; i++)
 		{	
@@ -118,6 +120,8 @@ void CTimerSampleDlg::OnPaint()
 			fill_brush.DeleteObject();
 		}
 		m_mem_dc.SelectObject(p_old_brush);
+		
+		dc.BitBlt(0, 0, m_width, m_height, &m_mem_dc, 0, 0, SRCCOPY);
 		//CDialogEx::OnPaint();
 	}
 }
@@ -137,7 +141,8 @@ void CTimerSampleDlg::OnTimer(UINT_PTR nIDEvent)
 	{
 		CRect r;
 		GetClientRect(r);
-		int w = r.Width(), h = r.Height();
+		m_width = r.Width();
+		m_height = r.Height();
 
 
 		CircleData* p = m_circleList;
@@ -146,14 +151,14 @@ void CTimerSampleDlg::OnTimer(UINT_PTR nIDEvent)
 			p->r--;
 			if (p->r == 0)
 			{
-				p->x = rand() % w;
-				p->y = rand() % h;
+				p->x = rand() % m_width;
+				p->y = rand() % m_height;
 				p->r = rand() % 40 + 10;
 				p->color = RGB(rand() % 256, rand() % 256, rand() % 256);
 			}
 			p++;
 		}
-		Invalidate(); // WM_PAINT message 발생
+		Invalidate(FALSE); // WM_PAINT message 발생
 	}
 	else
 	{
