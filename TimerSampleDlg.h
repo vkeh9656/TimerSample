@@ -20,7 +20,7 @@ private:
 	
 	CDC m_mem_dc; // 가상으로 메모리에 쓸 DC
 	CBitmap m_mem_bmp;
-	int m_width, m_height;
+	int m_width =0, m_height =0;
 
 // 생성입니다.
 public:
@@ -47,4 +47,5 @@ protected:
 public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnDestroy();
+	afx_msg void OnSize(UINT nType, int cx, int cy);
 };

@@ -33,6 +33,7 @@ BEGIN_MESSAGE_MAP(CTimerSampleDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_WM_TIMER()
 	ON_WM_DESTROY()
+	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 
@@ -99,27 +100,6 @@ void CTimerSampleDlg::OnPaint()
 	}
 	else
 	{
-		CircleData* p = m_circleList;
-		CBrush fill_brush,  * p_old_brush = m_mem_dc.GetCurrentBrush();
-
-		m_mem_dc.FillSolidRect(0, 0, m_width, m_height, RGB(220, 220, 220));
-
-		for (int i = 0; i < MAX_COUNT; i++)
-		{	
-			fill_brush.CreateSolidBrush(p->color);
-			m_mem_dc.SelectObject(&fill_brush);
-			/*p_old_brush = dc.SelectObject(&fill_brush);*/
-
-
-			//dc.Ellipse(m_circleList[i].x - m_circleList[i].r, m_circleList[i].y - m_circleList[i].r,
-			//	m_circleList[i].x + m_circleList[i].r, m_circleList[i].y + m_circleList[i].r); // 배열연산도 그렇고, 덧셈연산이 너무 많다..
-			m_mem_dc.Ellipse(p->x - p->r, p->y - p->r, p->x + p->r, p->y + p->r);
-			p++;
-
-			// dc.SelectObject(p_old_brush);
-			fill_brush.DeleteObject();
-		}
-		m_mem_dc.SelectObject(p_old_brush);
 		
 		dc.BitBlt(0, 0, m_width, m_height, &m_mem_dc, 0, 0, SRCCOPY);
 		//CDialogEx::OnPaint();
@@ -144,8 +124,9 @@ void CTimerSampleDlg::OnTimer(UINT_PTR nIDEvent)
 		m_width = r.Width();
 		m_height = r.Height();
 
-
 		CircleData* p = m_circleList;
+		CBrush fill_brush, * p_old_brush = m_mem_dc.GetCurrentBrush();
+		m_mem_dc.FillSolidRect(0, 0, m_width, m_height, RGB(220, 220, 220));
 		for (int i = 0; i < MAX_COUNT; i++)
 		{
 			p->r--;
@@ -156,8 +137,15 @@ void CTimerSampleDlg::OnTimer(UINT_PTR nIDEvent)
 				p->r = rand() % 40 + 10;
 				p->color = RGB(rand() % 256, rand() % 256, rand() % 256);
 			}
+			fill_brush.CreateSolidBrush(p->color);
+			m_mem_dc.SelectObject(&fill_brush);
+			m_mem_dc.Ellipse(p->x - p->r, p->y - p->r, p->x + p->r, p->y + p->r);
+			fill_brush.DeleteObject();
+			
 			p++;
 		}
+		m_mem_dc.SelectObject(p_old_brush);
+
 		Invalidate(FALSE); // WM_PAINT message 발생
 	}
 	else
@@ -176,4 +164,25 @@ void CTimerSampleDlg::OnDestroy()
 
 	m_mem_bmp.DeleteObject();
 	m_mem_dc.DeleteDC();
+}
+
+
+void CTimerSampleDlg::OnSize(UINT nType, int cx, int cy)
+{
+	CDialogEx::OnSize(nType, cx, cy);
+
+	if (cx != m_width || cy != m_height)
+	{
+		if (m_width && m_height)
+		{
+			m_width = cx;
+			m_height = cy;
+
+			m_mem_bmp.DeleteObject();
+
+			CClientDC dc(this);
+			m_mem_bmp.CreateCompatibleBitmap(&dc, m_width, m_height); // m_mem_dc를 참조 걸면 안됨! CompatibleDC로 선언한 dc는 비정상적인 비트맵이 생성되기 때문
+			m_mem_dc.SelectObject(&m_mem_bmp);
+		}
+	}
 }
