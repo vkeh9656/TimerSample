@@ -95,8 +95,8 @@ void CTimerSampleDlg::OnPaint()
 	}
 	else
 	{
-		
-		dc.BitBlt(0, 0, m_mem_dc.GetWidth(), m_mem_dc.GetHeight(), m_mem_dc.GetDC(), 0, 0, SRCCOPY);
+		m_mem_dc.Draw(&dc, 0, 0);
+		//dc.BitBlt(0, 0, m_mem_dc.GetWidth(), m_mem_dc.GetHeight(), m_mem_dc.GetDC(), 0, 0, SRCCOPY);
 		//CDialogEx::OnPaint();
 	}
 }
@@ -162,11 +162,5 @@ void CTimerSampleDlg::OnSize(UINT nType, int cx, int cy)
 {
 	CDialogEx::OnSize(nType, cx, cy);
 
-	if (cx != m_mem_dc.GetWidth() || cy != m_mem_dc.GetHeight())
-	{
-		if (m_mem_dc.GetWidth() && m_mem_dc.GetHeight())
-		{
-			m_mem_dc.Resize(this, cx, cy);
-		}
-	}
+	m_mem_dc.Resize(this, cx, cy);
 }

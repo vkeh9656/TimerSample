@@ -47,14 +47,20 @@ public:
 
 	void Resize(CWnd *ap_wnd, int a_width, int a_height)
 	{	
-		m_mem_bmp.DeleteObject();
+		if (a_width != m_width || a_height != m_height)
+		{
+			if (m_width && m_height)
+			{
+				m_mem_bmp.DeleteObject();
 
-		m_width = a_width;
-		m_height = a_height;
+				m_width = a_width;
+				m_height = a_height;
 
-		CClientDC dc(ap_wnd);
-		m_mem_bmp.CreateCompatibleBitmap(&dc, m_width, m_height);
-		m_mem_dc.SelectObject(&m_mem_bmp);
+				CClientDC dc(ap_wnd);
+				m_mem_bmp.CreateCompatibleBitmap(&dc, m_width, m_height);
+				m_mem_dc.SelectObject(&m_mem_bmp);
+			}
+		}
 	}
 
 	inline CDC* GetDC()
@@ -70,6 +76,11 @@ public:
 	inline int GetHeight()
 	{
 		return m_height;
+	}
+
+	void Draw(CDC* ap_dc, int a_x, int a_y)
+	{
+		ap_dc->BitBlt(0, 0, m_width, m_height, &m_mem_dc, 0, 0, SRCCOPY);
 	}
 };
 
