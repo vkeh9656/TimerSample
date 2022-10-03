@@ -50,20 +50,15 @@ BOOL CTimerSampleDlg::OnInitDialog()
 
 	CRect r;
 	GetClientRect(r);
-	m_width = r.Width();
-	m_height = r.Height();
+	m_mem_dc.Create(this, r.Width(), r.Height());
 
 	CClientDC dc(this);
-	m_mem_dc.CreateCompatibleDC(&dc);
-	m_mem_bmp.CreateCompatibleBitmap(&dc, m_width, m_height); // m_mem_dc를 참조 걸면 안됨! CompatibleDC로 선언한 dc는 비정상적인 비트맵이 생성되기 때문
-	m_mem_dc.SelectObject(&m_mem_bmp);
-
 	srand((unsigned int)time(NULL)); // 랜덤 시드 세팅(srand)은 프로그램 시작때 한번만 하면 됨.
 	
 	for (int i = 0; i < MAX_COUNT; i++)
 	{
-		m_circleList[i].x = rand() % m_width; // w 값을 넘어가지 않도록  0 ~ w-1 (너비)
-		m_circleList[i].y = rand() % m_height; // h 값을 넘어가지 않도록  0 ~ h-1 (높이)
+		m_circleList[i].x = rand() % m_mem_dc.GetWidth(); // w 값을 넘어가지 않도록  0 ~ w-1 (너비)
+		m_circleList[i].y = rand() % m_mem_dc.GetHeight(); // h 값을 넘어가지 않도록  0 ~ h-1 (높이)
 		m_circleList[i].r = rand() % 40 + 10; // 최소크기 10인 반지름 50 이내의 원 (10~49)
 		m_circleList[i].color = RGB(rand() % 256, rand() % 256, rand() % 256);
 	}
@@ -101,7 +96,7 @@ void CTimerSampleDlg::OnPaint()
 	else
 	{
 		
-		dc.BitBlt(0, 0, m_width, m_height, &m_mem_dc, 0, 0, SRCCOPY);
+		dc.BitBlt(0, 0, m_mem_dc.GetWidth(), m_mem_dc.GetHeight(), m_mem_dc.GetDC(), 0, 0, SRCCOPY);
 		//CDialogEx::OnPaint();
 	}
 }
@@ -119,32 +114,31 @@ void CTimerSampleDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	if (nIDEvent == 1) 
 	{
+		CDC* p_dc = m_mem_dc.GetDC();
 		CRect r;
 		GetClientRect(r);
-		m_width = r.Width();
-		m_height = r.Height();
 
 		CircleData* p = m_circleList;
-		CBrush fill_brush, * p_old_brush = m_mem_dc.GetCurrentBrush();
-		m_mem_dc.FillSolidRect(0, 0, m_width, m_height, RGB(220, 220, 220));
+		CBrush fill_brush, * p_old_brush = p_dc->GetCurrentBrush();
+		p_dc->FillSolidRect(0, 0, m_mem_dc.GetWidth(), m_mem_dc.GetHeight(), RGB(220, 220, 220));
 		for (int i = 0; i < MAX_COUNT; i++)
 		{
 			p->r--;
 			if (p->r == 0)
 			{
-				p->x = rand() % m_width;
-				p->y = rand() % m_height;
+				p->x = rand() % m_mem_dc.GetWidth();
+				p->y = rand() % m_mem_dc.GetHeight();
 				p->r = rand() % 40 + 10;
 				p->color = RGB(rand() % 256, rand() % 256, rand() % 256);
 			}
 			fill_brush.CreateSolidBrush(p->color);
-			m_mem_dc.SelectObject(&fill_brush);
-			m_mem_dc.Ellipse(p->x - p->r, p->y - p->r, p->x + p->r, p->y + p->r);
+			p_dc->SelectObject(&fill_brush);
+			p_dc->Ellipse(p->x - p->r, p->y - p->r, p->x + p->r, p->y + p->r);
 			fill_brush.DeleteObject();
 			
 			p++;
 		}
-		m_mem_dc.SelectObject(p_old_brush);
+		p_dc->SelectObject(p_old_brush);
 
 		Invalidate(FALSE); // WM_PAINT message 발생
 	}
@@ -161,9 +155,6 @@ void CTimerSampleDlg::OnDestroy()
 	CDialogEx::OnDestroy();
 
 	KillTimer(1);
-
-	m_mem_bmp.DeleteObject();
-	m_mem_dc.DeleteDC();
 }
 
 
@@ -171,18 +162,11 @@ void CTimerSampleDlg::OnSize(UINT nType, int cx, int cy)
 {
 	CDialogEx::OnSize(nType, cx, cy);
 
-	if (cx != m_width || cy != m_height)
+	if (cx != m_mem_dc.GetWidth() || cy != m_mem_dc.GetHeight())
 	{
-		if (m_width && m_height)
+		if (m_mem_dc.GetWidth() && m_mem_dc.GetHeight())
 		{
-			m_width = cx;
-			m_height = cy;
-
-			m_mem_bmp.DeleteObject();
-
-			CClientDC dc(this);
-			m_mem_bmp.CreateCompatibleBitmap(&dc, m_width, m_height); // m_mem_dc를 참조 걸면 안됨! CompatibleDC로 선언한 dc는 비정상적인 비트맵이 생성되기 때문
-			m_mem_dc.SelectObject(&m_mem_bmp);
+			m_mem_dc.Resize(this, cx, cy);
 		}
 	}
 }

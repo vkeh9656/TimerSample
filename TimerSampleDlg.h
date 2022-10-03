@@ -12,15 +12,77 @@ struct CircleData
 	COLORREF color;
 };
 
+class SJ_MemDC
+{
+private:
+	CDC m_mem_dc; // 가상으로 메모리에 쓸 DC
+	CBitmap m_mem_bmp;
+	int m_width, m_height;
+
+public:
+	SJ_MemDC()
+	{
+		m_width = m_height = 0;
+	}
+
+	~SJ_MemDC()
+	{
+		if (m_mem_dc.m_hDC != NULL) 
+		{
+			m_mem_bmp.DeleteObject();
+			m_mem_dc.DeleteDC();
+		}
+	}
+
+	void Create(CWnd *ap_wnd, int a_width, int a_height)
+	{
+		CClientDC dc(ap_wnd);
+
+		m_width = a_width;
+		m_height = a_height;
+		m_mem_dc.CreateCompatibleDC(&dc);
+		m_mem_bmp.CreateCompatibleBitmap(&dc, m_width, m_height);
+		m_mem_dc.SelectObject(&m_mem_bmp);
+	}
+
+	void Resize(CWnd *ap_wnd, int a_width, int a_height)
+	{	
+		m_mem_bmp.DeleteObject();
+
+		m_width = a_width;
+		m_height = a_height;
+
+		CClientDC dc(ap_wnd);
+		m_mem_bmp.CreateCompatibleBitmap(&dc, m_width, m_height);
+		m_mem_dc.SelectObject(&m_mem_bmp);
+	}
+
+	inline CDC* GetDC()
+	{
+		return &m_mem_dc;
+	}
+
+	inline int GetWidth()
+	{
+		return m_width;
+	}
+
+	inline int GetHeight()
+	{
+		return m_height;
+	}
+};
+
 // CTimerSampleDlg 대화 상자
 class CTimerSampleDlg : public CDialogEx
 {
 private:
 	CircleData m_circleList[MAX_COUNT];
 	
-	CDC m_mem_dc; // 가상으로 메모리에 쓸 DC
-	CBitmap m_mem_bmp;
-	int m_width =0, m_height =0;
+	SJ_MemDC m_mem_dc;
+	//CDC m_mem_dc; // 가상으로 메모리에 쓸 DC
+	//CBitmap m_mem_bmp;
+	//int m_width =0, m_height =0;
 
 // 생성입니다.
 public:
